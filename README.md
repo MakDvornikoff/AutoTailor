@@ -1,88 +1,125 @@
-# AutoTailor
+# ✂️ AutoTailor
 
-AutoTailor is an automatic program for cleaning, rotating, and cropping scanned drawings, plans, and documents.
+> **Automated, content-aware document scanner preprocessor, de-skewer, and OCR verifier.**
 
-It automatically removes grey scan backgrounds (making pages pure white), rotates pages to be right-side up, crops borders, and extracts text.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
+[![Platform Support](https://img.shields.io/badge/platform-windows%20%7C%20linux%20%7C%20macos-lightgrey.svg)](#)
+[![Tesseract OCR](https://img.shields.io/badge/OCR-Tesseract-orange.svg)](https://github.com/tesseract-ocr/tesseract)
+
+AutoTailor automatically removes grey scanner backgrounds (producing pure white pages), rotates/de-skews pages to be upright, crops messy borders, and extracts text for document classification.
+
+---
+
+### 📊 Before / After Comparison
+
+| 📂 Raw Input Scan (Before) | ✨ Cleaned & Tailored (After) |
+| :--- | :--- |
+| **Issues:** Grey shadows, tilted alignment, scanner board noise. | **Results:** Cropped edges, straightened content, pure white canvas. |
+| <pre align="left">┌──────────────────────────────────────┐<br>│░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│<br>│░░   /   \                             ░░│<br>│░░  /  _  \  _ __  _ __   __ _  _ __   ░░│<br>│░░ /  /_\  \| '__|| '_ \ / _` || '_ \  ░░│<br>│░░/  ┌───┐  \  |  | |_) | (_| || | | | ░░│<br>│░░\_/     \_/__|  | .__/ \__,_||_| |_| ░░│<br>│░░                |_|                  ░░│<br>│░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│<br>│░░░░░░ [ Tilted / Grey / Shadows ] ░░░░│<br>│░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│<br>└──────────────────────────────────────┘</pre> | <pre align="left">┌──────────────────────────────────┐<br>│   /   \                          │<br>│  /  _  \  _ __  _ __   __ _      │<br>│ /  /_\  \| '__|| '_ \ / _` |     │<br>│/  ┌───┐  \  |  | |_) | (_| |     │<br>│\_/     \_/__|  | .__/ \__,_|     │<br>│                |_|               │<br>└──────────────────────────────────┘<br><br><b>[OCR Text Output]</b><br>✓ Language detected: EN<br>✓ Verified words: PLAN, DRAWING</pre> |
+| **Background:** `#D2D2D2` (shadowy grey) <br>**Rotation:** `-12.5°` (skewed)<br>**Borders:** Dirty scanner margins | **Background:** `#FFFFFF` (pure white)<br>**Rotation:** `0.0°` (deskewed)<br>**Borders:** Cropped to content margin |
+
+---
 
 ### 🚀 Smart Auto-Configuration (Zero-Setup)
-AutoTailor features a built-in intelligent auto-detection system. When you process a batch of files, it automatically scans the first document, detects whether your files are in English, Russian, or Ukrainian, and applies the correct language settings, rotation keywords, and check-lists. **You don't need to configure anything manually — the program does it for you.**
+
+AutoTailor features an intelligent language auto-detection system. When you process a batch of files, it automatically inspects the first document, detects whether your files are in English, Russian, or Ukrainian, and applies the correct language settings, rotation keywords, and verification checklists.
+
+> [!NOTE]
+> **No manual configuration required** — the program dynamically loads the correct profile (`configs/config.<lang>.json`) for you.
 
 ---
 
-## Quick Start (For Windows Users)
+## ⚡ Quick Start (For Windows Users)
 
-You do not need to know how to program or install software manually. Setting up AutoTailor is fully automatic.
+You don't need any programming experience. Setting up AutoTailor is fully automatic.
 
-### 1. Initial Setup (Do this once)
+### 1️⃣ Initial Setup (Do this once)
 1. Double-click the file **`setup_windows.bat`** in the program folder.
 2. The setup tool will automatically install **Python**, **Tesseract-OCR**, and all required packages.
-3. Wait for it to finish. If prompted by Windows, allow the installation.
+3. Wait for the process to finish. If prompted by Windows Defender or User Account Control, allow the installation.
 
-### 2. Processing Scans
-1. Copy your scanned images (JPG, PNG, BMP) into the **`inbox`** folder.
+> [!IMPORTANT]
+> The setup file checks for system privileges to install Tesseract OCR and add it to the system environment variables automatically.
+
+### 2️⃣ Processing Scans
+1. Copy your scanned images (`.jpg`, `.png`, `.bmp`) into the **`inbox`** folder.
 2. Double-click the file **`Process_Inbox.bat`**.
-3. The program will automatically clean, crop, rotate, and extract text from your files.
-4. Open the **`out`** folder to find your cleaned PNG files, PDF documents, and text OCR reports.
+3. Open the **`out`** folder to find your cleaned PNG files, merged PDF documents, and text OCR reports.
 
-### 3. Switching Cleaning Modes
-You can switch how the program cleans the scans by double-clicking the following helper files:
-* **`Set_Mode_Gray.bat`** (Default): Keeps colored stamps/signatures but makes the paper background white.
-* **`Set_Mode_BW.bat`**: Converts scans to clean, high-contrast black & white (great for pure text).
-* **`Set_Mode_Color.bat`**: Cleans the background but preserves full colors.
+### 3️⃣ Selecting Cleaning Modes
+You can switch the cleaning engine by double-clicking the helper batch files:
+* **`Set_Mode_Gray.bat`** (Default): Keeps colored stamps/signatures but makes the paper background pure white.
+* **`Set_Mode_BW.bat`**: Converts scans to clean, high-contrast black & white (optimal for pure text & OCR).
+* **`Set_Mode_Color.bat`**: Cleans the background shadows but preserves all original colors.
 
 ---
 
-## Configuration (`config.json`)
+## ⚙️ How It Works (Pipeline)
 
-You can open the `config.json` file in a text editor to customize settings. 
+```mermaid
+graph TD
+    A[Raw Scan in Inbox] --> B[Smart Language Detector]
+    B --> C[Page De-skewing / Rotation via Tesseract]
+    C --> D[Background Normalization & Shadow Removal]
+    D --> E[Connected Component Border & Margin Cropping]
+    E --> F[OCR Verification & Text Export]
+    F --> G[Generate Clean PNG / Searchable PDF in Out]
+```
 
-Example configuration with generic settings:
+---
+
+## 🔧 Configuration (`config.json`)
+
+Open `config.json` in any text editor to customize parameters.
+
 ```json
 {
   "mode": "gray",
   "ocr_language": "eng",
-  "ocr_checklist": [
-    "PLAN",
-    "DRAWING",
-    "EXPLANATION"
-  ],
-  "rotation_keywords": [
-    "plan",
-    "floor",
-    "area",
-    "building",
-    "street"
-  ],
+  "ocr_checklist": ["PLAN", "DRAWING", "EXPLANATION"],
+  "rotation_keywords": ["plan", "floor", "area", "building", "street"],
   "report_language": "en",
   "tessdata_dir": null
 }
 ```
 
-* `ocr_checklist`: Words that the program checks for to confirm if the document is valid.
-* `rotation_keywords`: Key words used by the program to determine which way to rotate the page (e.g. looking for words like "plan" or "street" to align the text).
-* `report_language`: Language of the generated text reports (`en` for English, `ru` for Russian).
+### Parameters Guide
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `mode` | `string` | `"gray"` | Background cleaning mode (`gray`, `bw`, `color`). |
+| `ocr_language` | `string` | `"eng"` | Tesseract OCR language package (e.g., `eng`, `rus`, `ukr`). |
+| `ocr_checklist` | `list` | `[...]` | Required keywords checked by the program to validate document type. |
+| `rotation_keywords` | `list` | `[...]` | Keywords used to orient the scan (rotates sheet until keywords are horizontal). |
+| `report_language` | `string` | `"en"` | Language of the generated log reports (`en` or `ru`). |
+| `tessdata_dir` | `string` | `null` | Custom path to Tesseract language data files if needed. |
 
 ---
 
-## Developer Installation (Advanced)
+## 💻 Developer Installation (Advanced)
 
-If you are a developer, install it via pip:
+If you are a developer, install the package via `pip` and run it from your terminal:
 
 ```bash
+# Clone and install locally
+git clone https://github.com/MakDvornikoff/AutoTailor.git
+cd AutoTailor
 pip install .
 ```
 
-Run via CLI:
+### CLI Interface
+
 ```bash
-# Process single file
+# Process a single scan file
 autotailor path/to/scan.jpg path/to/output/
 
-# Process folder
+# Process all scans in the inbox folder
 autotailor --inbox
 ```
 
 ---
 
-## License
+## 📄 License
 
-This project is licensed under the MIT License.
+This project is open-source and licensed under the **MIT License**. See [LICENSE](LICENSE) for details.

@@ -1,0 +1,5 @@
+gradio>=4.0.0
+numpy>=1.19.0
+pillow>=8.0.0
+pytesseract>=0.3.8
+opencv-python-headless>=4.5.0
