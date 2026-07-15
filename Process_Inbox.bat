@@ -3,7 +3,8 @@ echo ===================================================
 echo   AutoTailor - Automatic Batch Processor
 echo ===================================================
 echo.
-python "%~dp0process_inbox.py"
+set PYTHONPATH=%~dp0src
+python -m autotailor.cli --inbox
 echo.
 echo Press any key to exit...
 pause > nul
