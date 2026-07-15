@@ -8,9 +8,9 @@ echo.
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo Python is NOT installed.
-    echo Installing Python 3.11 via Windows Package Manager (winget)...
+    echo Installing Python via Windows Package Manager (winget)...
     echo.
-    winget install Python.Python.3.11
+    winget install Python.Python
     if %errorlevel% neq 0 (
         echo.
         echo Failed to install Python automatically.
