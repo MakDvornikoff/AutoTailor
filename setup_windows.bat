@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 > nul
 echo ===================================================
 echo   AutoTailor - Windows Automatic Environment Setup
 echo ===================================================
