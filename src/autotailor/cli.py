@@ -13,7 +13,7 @@ from autotailor.ocr import configure_tesseract, detect_rotation, perform_ocr_ver
 DEFAULT_CONFIG = {
     "mode": "gray",
     "ocr_language": "ukr+eng",
-    "ocr_checklist": ["СХЕМАТИЧНИЙ", "ПЛАН", "Кривий", "Ріг", "Експлікація", "Дишинського"],
+    "ocr_checklist": ["СХЕМАТИЧНИЙ", "ПЛАН", "Експлікація", "Креслення"],
     "rotation_keywords": ["план", "поверх", "область", "район", "громада", "вулиця", "експлікація", "будівля", "схема"],
     "report_language": "ru",
     "tessdata_dir": None
