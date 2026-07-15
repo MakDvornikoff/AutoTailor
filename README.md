@@ -4,6 +4,9 @@ AutoTailor is an automatic program for cleaning, rotating, and cropping scanned 
 
 It automatically removes grey scan backgrounds (making pages pure white), rotates pages to be right-side up, crops borders, and extracts text.
 
+### 🚀 Smart Auto-Configuration (Zero-Setup)
+AutoTailor features a built-in intelligent auto-detection system. When you process a batch of files, it automatically scans the first document, detects whether your files are in English, Russian, or Ukrainian, and applies the correct language settings, rotation keywords, and check-lists. **You don't need to configure anything manually — the program does it for you.**
+
 ---
 
 ## Quick Start (For Windows Users)
