@@ -1,0 +1,22 @@
+{
+  "mode": "gray",
+  "ocr_language": "eng",
+  "ocr_checklist": [
+    "SCHEMATIC",
+    "PLAN",
+    "EXPLANATION",
+    "MAP"
+  ],
+  "rotation_keywords": [
+    "plan",
+    "floor",
+    "area",
+    "district",
+    "street",
+    "explanation",
+    "building",
+    "scheme"
+  ],
+  "report_language": "en",
+  "tessdata_dir": null
+}
