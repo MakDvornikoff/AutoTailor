@@ -283,12 +283,99 @@ def process_file(file_path, output_dir, rotate_angle=0, mode='gray', config=None
 
     return out_img_path, out_pdf_path
 
+def detect_best_profile(files, base_dir):
+    """
+    Scans the first available scan in the inbox to auto-detect the document language profile.
+    """
+    configs_dir = os.path.join(base_dir, "configs")
+    if not os.path.exists(configs_dir):
+        return None
+
+    # Load all available profiles
+    profiles = {}
+    profile_paths = {
+        "ua": os.path.join(configs_dir, "config.ua.json"),
+        "ru": os.path.join(configs_dir, "config.ru.json"),
+        "en": os.path.join(configs_dir, "config.en.json")
+    }
+    
+    for name, path in profile_paths.items():
+        if os.path.exists(path):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    profiles[name] = json.load(f)
+            except Exception:
+                pass
+
+    if not profiles:
+        return None
+
+    # Find the first valid image file
+    sample_file = None
+    for f in files:
+        if os.path.basename(f).lower().endswith(('.jpg', '.jpeg', '.png', '.bmp', '.tiff')):
+            sample_file = f
+            break
+
+    if not sample_file:
+        return None
+
+    # Read and downscale sample image for fast OCR
+    img = cv2.imread(sample_file)
+    if img is None:
+        return None
+
+    h, w = img.shape[:2]
+    scale = 800.0 / max(h, w)
+    small = cv2.resize(img, (int(w * scale), int(h * scale)))
+    
+    if len(small.shape) == 3:
+        b_ch, g_ch, r_ch = cv2.split(small)
+        gray = cv2.min(cv2.min(r_ch, g_ch), b_ch)
+    else:
+        gray = small
+    binary = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 51, 15)
+    
+    pil_img = Image.fromarray(binary)
+    try:
+        # Check installed language packs to prevent crash
+        installed_langs = pytesseract.get_languages()
+        target_langs = [l for l in ["ukr", "rus", "eng"] if l in installed_langs]
+        if not target_langs:
+            target_langs = ["eng"]
+        lang_str = "+".join(target_langs)
+        text = pytesseract.image_to_string(pil_img, lang=lang_str, config='--psm 11').lower()
+    except Exception:
+        try:
+            text = pytesseract.image_to_string(pil_img, lang="eng", config='--psm 11').lower()
+        except Exception:
+            return None
+
+    # Count matching keywords
+    scores = {}
+    for name, p_config in profiles.items():
+        score = 0
+        checklist = p_config.get("ocr_checklist", [])
+        rot_keywords = p_config.get("rotation_keywords", [])
+        for kw in checklist + rot_keywords:
+            if kw.lower() in text:
+                score += 1
+        scores[name] = score
+
+    # Find highest score profile
+    best_profile = max(scores, key=scores.get)
+    if scores[best_profile] > 0:
+        return best_profile, profiles[best_profile], scores[best_profile]
+    
+    return None
+
 def process_inbox_directory(config):
     # Locate project root base directory
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     inbox_dir = os.path.join(base_dir, "inbox")
     out_dir = os.path.join(base_dir, "out")
 
+    # Load translations using active config
     lang = config.get("report_language", "en")
     if lang not in TRANSLATIONS:
         lang = "en"
@@ -302,9 +389,7 @@ def process_inbox_directory(config):
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    mode = config.get("mode", "gray")
-    print(f"{t['current_mode']}: {mode.upper()}")
-
+    # Get files
     extensions = ('*.jpg', '*.jpeg', '*.png', '*.tiff', '*.bmp')
     files = []
     for ext in extensions:
@@ -315,6 +400,27 @@ def process_inbox_directory(config):
         return
 
     print(f"{t['found_files']}: {len(files)}")
+
+    # RUN SMART PROFILE DETECTION
+    print("Auto-detecting document language and config profile...")
+    configure_tesseract(config.get("tessdata_dir"))
+    detection_res = detect_best_profile(files, base_dir)
+    if detection_res:
+        profile_name, profile_config, match_count = detection_res
+        print(f"[Smart Detect] Auto-configured profile: {profile_name.upper()} (keyword matches: {match_count})")
+        # Apply profile configuration
+        for k, v in profile_config.items():
+            config[k] = v
+        # Reload translations based on new profile language
+        lang = config.get("report_language", "en")
+        if lang not in TRANSLATIONS:
+            lang = "en"
+        t = TRANSLATIONS[lang]
+    else:
+        print("[Smart Detect] Could not confidently auto-detect language. Using default config.json settings.")
+
+    mode = config.get("mode", "gray")
+    print(f"{t['current_mode']}: {mode.upper()}")
 
     for f in files:
         rot = get_exif_rotation(f)
