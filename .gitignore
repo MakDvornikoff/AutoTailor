@@ -1,0 +1,14 @@
+# Exclude the contents of inbox and out directories
+inbox/*
+!inbox/.gitkeep
+
+out/*
+!out/.gitkeep
+
+# Python cache and virtual environment files
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
